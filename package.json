@@ -19,6 +19,7 @@
     "leaflet": "^1.9.4",
     "solid-js": "^1.8.11",
     "solid-three": "^0.2.0",
-    "three": "^0.169.0"
+    "three": "^0.169.0",
+    "three-stdlib": "^2.34.0"
   }
 }

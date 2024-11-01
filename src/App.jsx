@@ -1,46 +1,45 @@
-// src/App.tsx
-import { createSignal, createEffect, onMount } from 'solid-js';
+// src/App.jsx
+import './App.css';
+import { createSignal, Show } from 'solid-js';
 import MapComponent from './components/MapComponent';
-// import ThreeDView from './components/Ea';
+import ThreeCuboid from './components/ThreeCuboid';
 
 function App() {
-  // const [earthquakeData, setEarthquakeData] = createSignal([]);
   const [selectedAreaData, setSelectedAreaData] = createSignal([]);
   const [show3DView, setShow3DView] = createSignal(false);
-  const [count, setCount] = createSignal(0);
-  const [isDataLoaded, setIsDataLoaded] = createSignal(false);
+  const [isSelecting, setIsSelecting] = createSignal(false);
 
-  // // Fetch earthquake data from the USGS API
-  // onMount(() => {
-  //   fetch('https://earthquake.usgs.gov/fdsnws/event/1/query?format=geojson&starttime=2014-01-01&endtime=2014-01-02')
-  //     .then(response => response.json())
-  //     .then(data => {
-  //       setEarthquakeData(data.features);
-  //       setIsDataLoaded(true);
-  //     });
-  // });
-
-  // Handle selected earthquakes based on user-drawn area
-
-  // RADI
   const handleSelection = (selectedEarthquakes) => {
     setSelectedAreaData(selectedEarthquakes);
-    // console.log(selectedAreaData);s
     console.log("selectedAreaData", selectedAreaData());
   };
 
+  const toggle3DView = () => {
+    setShow3DView(!show3DView());
+  };
+
+  const toggleSelection = () => {
+    setIsSelecting(!isSelecting());
+  };
+
   return (
-    <div>
-
-        <MapComponent
-          onAreaSelect={handleSelection}
-          onView3D={() => setShow3DView(true)}
-        />
-
-
-      {/* Optional: Render ThreeDView component */}
-      {show3DView() && <ThreeDView />}
-    </div>
+      <div>
+        <div className="button-container">
+          <button onClick={toggleSelection}>
+            {isSelecting() ? "Reset Selection" : "Select Area"}
+          </button>
+          <button onClick={toggle3DView}>
+            {show3DView() ? "View Map" : "View 3D"}
+          </button>
+        </div>
+        <Show when={!show3DView()} fallback={<ThreeCuboid />}>
+          <MapComponent
+              onAreaSelect={handleSelection}
+              isSelecting={isSelecting}
+              toggleSelection={toggleSelection}
+          />
+        </Show>
+      </div>
   );
 }
 
