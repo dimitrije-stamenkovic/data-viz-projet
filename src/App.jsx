@@ -36,8 +36,10 @@ function App() {
           <MapComponent
               onAreaSelect={handleSelection}
               isSelecting={isSelecting}
-              toggleSelection={toggleSelection}
           />
+          <div className="selection-count-label">
+            Selected Earthquakes: {selectedAreaData().length}
+          </div>
         </Show>
       </div>
   );
