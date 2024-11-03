@@ -1,12 +1,17 @@
 // src/components/ThreeCuboid.jsx
-import { onCleanup, onMount } from "solid-js";
+import { onCleanup, onMount,createEffect } from "solid-js";
 import * as THREE from "three";
 import { OrbitControls } from "three-stdlib";
 
-export default function ThreeCuboid() {
+export default function ThreeCuboid(props) {
   let container;
+  const { earthquakes, bounds } = props.earthquakeData || {};
+
+
 
   onMount(() => {
+    console.log(earthquakes)
+
     // Scene, Camera, Renderer setup
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(75, container.clientWidth / container.clientHeight, 0.1, 1000);
@@ -38,20 +43,42 @@ export default function ThreeCuboid() {
     // Camera positioning
     camera.position.z = 5;
 
-    // Add red points inside the cuboid
     const pointMaterial = new THREE.MeshBasicMaterial({ color: 0xff0000 });
-    const points = [
-      { x: -0.5, y: -0.2, z: 0 }, // Sample points inside the cuboid
-      { x: 0.5, y: 0.2, z: -1 },
-      { x: -0.3, y: 0.3, z: 1 },
-    ];
+    if (earthquakes && bounds) {
+      // Calculate ranges for normalization
+      const latRange = bounds._northEast.lat - bounds._southWest.lat;
+      const lngRange = bounds._northEast.lng - bounds._southWest.lng;
 
-    points.forEach(({ x, y, z }) => {
-      const pointGeometry = new THREE.SphereGeometry(0.05); // Small red sphere
-      const point = new THREE.Mesh(pointGeometry, pointMaterial);
-      point.position.set(x, y, z);
-      scene.add(point);
-    });
+      const maxDepth = Math.max(...earthquakes.map(eq => eq.geometry.coordinates[2]));
+      const minDepth = Math.min(...earthquakes.map(eq => eq.geometry.coordinates[2]));
+
+      const maxMagnitude = Math.max(...earthquakes.map(eq => eq.properties.mag));
+
+      earthquakes.forEach(feature => {
+        const [lng, lat, depth] = feature.geometry.coordinates;
+        const magnitude = feature.properties.mag;
+
+        // Normalize each coordinate and start from the cuboid edges
+        const x = ((lng - bounds._southWest.lng) / lngRange) * 2 - 1; // Maps to [-1, 1]
+        const z = ((lat - bounds._southWest.lat) / latRange) * 1 - 0.5; // Maps to [-0.5, 0.5]
+        const y = -0.5 + (depth / maxDepth) * 1; // Maps depth to [0, 1.5]
+
+
+        // Adjust color based on depth (deeper = darker)
+        const colorValue = 1 - (depth - minDepth) / (maxDepth - minDepth); // Maps depth to [0, 1] range
+        const color = new THREE.Color(`hsl(${Math.round(colorValue * 240)}, 100%, 50%)`); // Blue for deep, red for shallow
+
+        // Adjust size based on magnitude
+        const size = (magnitude / maxMagnitude) * 0.06 + 0.01; // Scale to range [0.05, 0.25]
+
+        // Plot earthquake point in cuboid
+        const pointGeometry = new THREE.SphereGeometry(size);
+        const pointMaterial = new THREE.MeshBasicMaterial({ color });
+        const point = new THREE.Mesh(pointGeometry, pointMaterial);
+        point.position.set(x, y, z);
+        scene.add(point);
+      });
+    }
 
     // Add OrbitControls
     const controls = new OrbitControls(camera, renderer.domElement);

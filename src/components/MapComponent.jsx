@@ -56,17 +56,30 @@ function MapComponent({ onAreaSelect, isSelecting }) {
         }
       });
 
+      const minDepth = Math.min(...fetchedEarthquakes().map(e => e.geometry.coordinates[2]));
+      const maxDepth = Math.max(...fetchedEarthquakes().map(e => e.geometry.coordinates[2]));
+
       fetchedEarthquakes().forEach((feature) => {
-        const [longitude, latitude] = feature.geometry.coordinates;
+        const [longitude, latitude, depth] = feature.geometry.coordinates;
+        const magnitude = feature.properties.mag;
+
+        // Map depth to a [0, 1] range
+        const colorValue = 1 - (depth - minDepth) / (maxDepth - minDepth);
+
+        // Convert colorValue to HSL for a gradient from blue (deep) to red (shallow)
+        const fillColor = `hsl(${Math.round(colorValue * 240)}, 100%, 50%)`;
+
+        // Set radius based on magnitude (e.g., scale by factor of 2)
+        const radius = magnitude * 2;
+
         L.circleMarker([latitude, longitude], {
-          radius: 5,
-          fillColor: "#5fc5dd",
-          color: "#2fb836",
+          radius: radius,
+          fillColor: fillColor,
+          color: fillColor,
           fillOpacity: 0.5,
         }).addTo(currentMap);
       });
-    }
-  }
+  }}
 
   function startSelection(e) {
     startPoint = e.latlng;
@@ -137,7 +150,8 @@ function MapComponent({ onAreaSelect, isSelecting }) {
         return bounds.contains(L.latLng(lat, lng));
       });
       // Call onAreaSelect with the selected earthquakes
-      onAreaSelect(selectedEarthquakes);
+      // onAreaSelect(selectedEarthquakes);
+      onAreaSelect({ earthquakes: selectedEarthquakes, bounds });
     }
 
     startPoint = null;

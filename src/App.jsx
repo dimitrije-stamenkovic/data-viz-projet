@@ -5,7 +5,11 @@ import MapComponent from './components/MapComponent';
 import ThreeCuboid from './components/ThreeCuboid';
 
 function App() {
-  const [selectedAreaData, setSelectedAreaData] = createSignal([]);
+  const [selectedAreaData, setSelectedAreaData] = createSignal({
+      earthquakes:[],
+      bounds: null
+
+  });
   const [show3DView, setShow3DView] = createSignal(false);
   const [isSelecting, setIsSelecting] = createSignal(false);
 
@@ -32,13 +36,18 @@ function App() {
             {show3DView() ? "View Map" : "View 3D"}
           </button>
         </div>
-        <Show when={!show3DView()} fallback={<ThreeCuboid />}>
-          <MapComponent
+        <Show when={!show3DView()} fallback={<ThreeCuboid earthquakeData={selectedAreaData()} />}>
+        <MapComponent
               onAreaSelect={handleSelection}
               isSelecting={isSelecting}
           />
           <div className="selection-count-label">
-            Selected Earthquakes: {selectedAreaData().length}
+              {selectedAreaData() != null ? "Selected Earthquakes:" + selectedAreaData().earthquakes.length : "Selected Earthquakes: 0" }
+              {/*{if (selectedAreaData() == null){*/}
+              {/*    "Selected Earthquakes: 0"*/}
+              {/*}else{*/}
+              {/*    "Selected Earthquakes:" + selectedAreaData().earthquakes.length*/}
+              {/*}}*/}
           </div>
         </Show>
       </div>
